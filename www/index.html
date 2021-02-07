@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Game of Life</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
+      integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
+      crossorigin="anonymous" defer>
+    </script>
+    <style>
+      body {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      #fps {
+        white-space: pre;
+        font-family: monospace;
+      }
+      #glcanvas{
+        width: 800px;
+        height: 800px;
+        margin: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="play-pause"></button>
+    <canvas id="glcanvas"  width="640" height="480"></canvas>
+    <img id="sample_img" /><!---->
+    <script src="./bootstrap.js"></script>
+  </body>
+</html>
