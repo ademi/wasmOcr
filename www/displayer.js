@@ -18,21 +18,21 @@ class Displayer{
     
     // Set up mouse events
     // initial offset
-    this.dtx = 0;
-    this.dty = 0;
+    this.dx = 0;
+    this.dy = 0;
     this.canvas.addEventListener("mousedown", this.startListening.bind(this));
     document.addEventListener("mouseup"  , this.stopListening.bind(this));
     // keep track of event listeners (using bind changes the function reference)
     this.offset_listener = this.update.bind(this)
-
+    
     this.refresh(payload)
   }
   startListening(event){
-    this.offset_listener(event)
+    this.init_x = event.clientX - this.canvas.offsetLeft ;
+    this.init_y = event.clientY - this.canvas.offsetTop  ;
     this.canvas.addEventListener("mousemove", this.offset_listener);
   }
   stopListening(event){
-    //console.log(event)
     this.canvas.removeEventListener("mousemove", this.offset_listener);
   }
   refresh(payload){
@@ -46,14 +46,16 @@ class Displayer{
   
   }
   update(event){
-    this.dtx = event.clientX - this.canvas.offsetLeft;
-    this.dty = event.clientY - this.canvas.offsetTop;
+
+    this.dx = event.clientX - this.canvas.offsetLeft - this.init_x;
+    this.dy = event.clientY - this.canvas.offsetTop  - this.init_y;
+
     this.drawImage(
       this.program,this.gl,
       this.textureData.texture,
       this.textureData.width,
       this.textureData.height,
-      this.dtx,this.dty);
+      this.dx,this.dy);
   }
   getPtr(program,gl){
     return {
