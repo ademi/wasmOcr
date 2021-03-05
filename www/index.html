@@ -2,38 +2,74 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Game of Life</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
-      integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
-      crossorigin="anonymous" defer>
-    </script>
+    <title>Wasm Image Viewer</title>
     <style>
-      body {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+      html {
+        box-sizing: border-box;
       }
-      #fps {
-        white-space: pre;
-        font-family: monospace;
+      *, *:before, *:after {
+        box-sizing: inherit;
+        user-select: none;
+      }
+
+      body {
+        background-color: #aaa;
+        font-family: Sans-Serif;
+      }
+
+      canvas {
+        background-color: #fff;
+        border: 1px solid black;
+        /* NOTE: This size is changed if in iframe - see below '.iframe canvas' */
+        width: 400px;
+        height: 300px;
+        display: block;
+      }
+      canvas {
+        width: 90vw;
+        height: 90vh;
+        display: block;
       }
       #glcanvas{
-        width: 800px;
-        height: 800px;
         margin: auto;
+      }
+      #canvas{
+        display: none;
       }
     </style>
   </head>
   <body>
-    <button id="play-pause"></button>
-    <canvas id="glcanvas"  width="640" height="480"></canvas>
-    <img id="sample_img" /><!---->
+    <canvas id="glcanvas"  width="640" height="480" ></canvas>
+    <!--<img id="sample_img" />-->
+    <canvas id="canvas"></canvas>
+    <script  id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_position;
+      attribute vec2 a_texcoord;
+      
+      uniform mat4 u_matrix;
+      
+      varying vec2 v_texcoord;
+      
+      void main() {
+         gl_Position = u_matrix * a_position;
+         v_texcoord = a_texcoord;
+      }
+    </script>
+    <!-- fragment shader -->
+    <script  id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      varying vec2 v_texcoord;
+      
+      uniform sampler2D u_texture;
+      
+      void main() {
+         gl_FragColor = texture2D(u_texture, v_texcoord);
+      }
+      </script>
+
+    <script src="./utils.js"></script>
+    <script src="./mat4.js"></script>
     <script src="./bootstrap.js"></script>
   </body>
 </html>

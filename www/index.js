@@ -1,9 +1,8 @@
 import { Context,JsPayLoad } from "wasm-game-of-life";
 import { memory } from "wasm-game-of-life/wasm_game_of_life_bg";
-import { viewer } from "./viewer"
-
+import {displayer} from "./displayer"
 async function load_sample_img(){
-    const blob = await (await fetch('http://localhost:8080/leaves.jpeg')).blob();//ocr_example.png
+    const blob = await (await fetch('http://localhost:8080/ocr_example.png')).blob();//
     //display_img(blob)
     read_img_to_buf(blob)
 }
@@ -21,9 +20,9 @@ const App = {
             height: this.payload.get_height(),
             data: new Uint8Array(memory.buffer, this.payload.get_buff_ptr(), this.payload.get_width() * this.payload.get_height()*4)
         }
-        
-        viewer.init(payload);
-        viewer.refresh(payload)
+        displayer.init(payload)
+        //viewer.init(payload);
+        //viewer.refresh(payload)
 
     }
 
