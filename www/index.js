@@ -21,8 +21,6 @@ const App = {
             data: new Uint8Array(memory.buffer, this.payload.get_buff_ptr(), this.payload.get_width() * this.payload.get_height()*4)
         }
         displayer.init(payload)
-        //viewer.init(payload);
-        //viewer.refresh(payload)
 
     }
 

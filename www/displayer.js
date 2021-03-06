@@ -28,8 +28,8 @@ class Displayer{
     this.refresh(payload)
   }
   startListening(event){
-    this.init_x = event.clientX - this.canvas.offsetLeft ;
-    this.init_y = event.clientY - this.canvas.offsetTop  ;
+    this.init_x = event.clientX - this.canvas.offsetLeft - this.dx ;
+    this.init_y = event.clientY - this.canvas.offsetTop  - this.dy ;
     this.canvas.addEventListener("mousemove", this.offset_listener);
   }
   stopListening(event){
@@ -46,7 +46,8 @@ class Displayer{
   
   }
   update(event){
-
+    //console.log(`dx = ${event.clientX} - ${this.canvas.offsetLeft} - ${this.init_x} = ${event.clientX - this.canvas.offsetLeft - this.init_x}`)
+    //console.log(`dy = ${event.clientY} - ${this.canvas.offsetTop } - ${this.init_y} = ${event.clientY - this.canvas.offsetTop  - this.init_y}`)
     this.dx = event.clientX - this.canvas.offsetLeft - this.init_x;
     this.dy = event.clientY - this.canvas.offsetTop  - this.init_y;
 

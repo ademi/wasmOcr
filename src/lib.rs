@@ -45,7 +45,7 @@ impl Context {
         }
     }
     pub fn refresh(&self,payload:&mut JsPayLoad){
-        log!("here {} , {}",self.input_buffer.width(),self.input_buffer.height());
+        //log!("here {} , {}",self.input_buffer.width(),self.input_buffer.height());
         
         payload.width   =  self.input_buffer.width();
         payload.height  =  self.input_buffer.height();
