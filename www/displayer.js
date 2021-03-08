@@ -1,8 +1,28 @@
+import { Context,JsPayLoad } from "wasm-game-of-life";
+import { memory } from "wasm-game-of-life/wasm_game_of_life_bg";
+
+class App {
+  init(img_blob){
+    this.canvas = document.querySelector('#glcanvas');
+    let reader = new FileReader();
+    reader.onload = (event)=>{
+        let raw = new Uint8Array(event.target.result)
+        this.wasm_context= Context.new(raw);
+        this.payload= JsPayLoad.new();
+        this.displayer = new Displayer(this.canvas, this.wasm_context,this.payload)
+    }
+    reader.readAsArrayBuffer(img_blob);
+  }
+
+
+}
 
 class Displayer{
 
-  init(payload){
-    this.canvas = document.querySelector('#glcanvas');
+  constructor(canvas, img_processor, payload){
+    this.canvas = canvas;
+    this.processor = img_processor;
+    this.payload = payload;
     this.gl = this.canvas.getContext('webgl');
   
     // If we don't have a GL context, give up now
@@ -17,35 +37,51 @@ class Displayer{
     this.buffers = this.setUpBuffers(this.gl)
     
     // Set up mouse events
+    this.mouseEvents = new(mouseEvents)
+    // mouse buttons move the image while right button is clicked, release once done
     // initial offset
     this.dx = 0;
     this.dy = 0;
-    this.canvas.addEventListener("mousedown", this.startListening.bind(this));
-    document.addEventListener("mouseup"  , this.stopListening.bind(this));
+    this.canvas.addEventListener("mousedown", this.mouseEvents.mouse_clicked.bind(this));
+    document.addEventListener("mouseup"  ,    this.mouseEvents.mouse_unclicked.bind(this));
+
+    // setting mouse wheel
+    // scale image with mouse wheel
+    this.zoom_ratio = 1.0
+    this.canvas.addEventListener('wheel', this.mouseEvents.handleMouseWheel.bind(this));
     // keep track of event listeners (using bind changes the function reference)
-    this.offset_listener = this.update.bind(this)
-    
-    this.refresh(payload)
+    this.position_listener = this.reposition_img.bind(this)
+    this.scale_listener = this.scale_img.bind(this)
+
+    // load the initial image
+    this.processor.refresh(this.payload);
+    this.refresh(this.payload)
   }
-  startListening(event){
-    this.init_x = event.clientX - this.canvas.offsetLeft - this.dx ;
-    this.init_y = event.clientY - this.canvas.offsetTop  - this.dy ;
-    this.canvas.addEventListener("mousemove", this.offset_listener);
-  }
-  stopListening(event){
-    this.canvas.removeEventListener("mousemove", this.offset_listener);
-  }
+
   refresh(payload){
-    this.textureData = this.getTexture(this.gl,payload.data,payload.width,payload.height)
+    let data = {
+      width:  payload.get_width(),
+      height: payload.get_height(),
+      data: new Uint8Array(memory.buffer, payload.get_buff_ptr(), payload.get_width() * payload.get_height()*4)
+    }
+    
+    this.textureData = this.getTexture(this.gl,data.data,data.width,data.height)
     this.drawImage(
       this.program,this.gl,
       this.textureData.texture,
       this.textureData.width,
       this.textureData.height,
-      0,0);
+      this.dx,this.dy);
   
   }
-  update(event){
+  scale_img(event){
+    this.processor.resize(this.zoom_ratio,this.payload);
+    this.refresh(this.payload);
+
+  }
+  reposition_img(event){
+    event.stopPropagation();
+    event.preventDefault();
     //console.log(`dx = ${event.clientX} - ${this.canvas.offsetLeft} - ${this.init_x} = ${event.clientX - this.canvas.offsetLeft - this.init_x}`)
     //console.log(`dy = ${event.clientY} - ${this.canvas.offsetTop } - ${this.init_y} = ${event.clientY - this.canvas.offsetTop  - this.init_y}`)
     this.dx = event.clientX - this.canvas.offsetLeft - this.init_x;
@@ -173,5 +209,27 @@ class Displayer{
   }
 
 }
-export const displayer = new Displayer();
+class mouseEvents{
+  handleMouseWheel(event){
+    event.stopPropagation();
+    event.preventDefault();
+    const delta = Math.max(-1, Math.min(1, -event.deltaY));
+    this.zoom_ratio = Math.max(0.1, this.zoom_ratio + delta * 0.05);
+    console.log(this.zoom_ratio)
+    this.scale_listener();
+  }
 
+  mouse_clicked(event){
+    event.stopPropagation();
+    event.preventDefault();
+    this.init_x = event.clientX - this.canvas.offsetLeft - this.dx ;
+    this.init_y = event.clientY - this.canvas.offsetTop  - this.dy ;
+    this.canvas.addEventListener("mousemove", this.position_listener);
+  }
+  mouse_unclicked(event){
+    event.stopPropagation();
+    event.preventDefault();
+    this.canvas.removeEventListener("mousemove", this.position_listener);
+  }
+}
+export const app = new(App);

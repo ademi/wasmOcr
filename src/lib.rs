@@ -73,7 +73,7 @@ impl Context {
         let resized = self.original_img.resize(
             (self.displayed_width as f32 *ratio ) as u32,
             (self.displayed_height as f32 *ratio) as u32,
-            FilterType::Lanczos3
+            FilterType::Gaussian
         ).to_rgba8();
         payload.width   =  resized.width();
         payload.height  =  resized.height();
