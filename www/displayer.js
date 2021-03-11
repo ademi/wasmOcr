@@ -6,10 +6,10 @@ class App {
     this.canvas = document.querySelector('#glcanvas');
     let reader = new FileReader();
     reader.onload = (event)=>{
-        let raw = new Uint8Array(event.target.result)
-        this.wasm_context= Context.new(raw);
-        this.payload= JsPayLoad.new();
-        this.displayer = new Displayer(this.canvas, this.wasm_context,this.payload)
+      let raw = new Uint8Array(event.target.result)
+      this.wasm_context= Context.new(raw);
+      this.payload= JsPayLoad.new();
+      this.displayer = new Displayer(this.canvas, this.wasm_context,this.payload)
     }
     reader.readAsArrayBuffer(img_blob);
   }
@@ -38,6 +38,33 @@ class Displayer{
     
     // Set up mouse events
     this.mouseEvents = new(mouseEvents)
+    this.init_mouse_control()
+    // load the initial image
+    this.processor.refresh(this.payload);
+    this.refresh(this.payload)
+  }
+  init_mouse_control(){
+    // Handle drag and drop
+    //document.addEventListener('dragover', this.mouseEvents._handleDragOver.bind(this));
+    //document.addEventListener('drop',     this.mouseEvents._handleDrop.bind(this));
+
+    this.mouseEvents._handleDragOver(document,(event)=>{
+      event.dataTransfer.dropEffect = 'copy';
+    })
+    this.mouseEvents._handleDrop(document,(event)=>{
+        //console.log(event);
+        let reader = new FileReader();
+        reader.onload = (event)=>{
+            let raw = new Uint8Array(event.target.result)
+            this.processor= Context.new(raw);
+            this.processor.refresh(this.payload);
+            this.refresh(this.payload)
+            //
+        }
+        const file = event.dataTransfer.files[0]
+        reader.readAsArrayBuffer(file);
+      
+    })
     // mouse buttons move the image while right button is clicked, release once done
     // initial offset
     this.dx = 0;
@@ -52,12 +79,13 @@ class Displayer{
     // keep track of event listeners (using bind changes the function reference)
     this.position_listener = this.reposition_img.bind(this)
     this.scale_listener = this.scale_img.bind(this)
-
-    // load the initial image
-    this.processor.refresh(this.payload);
-    this.refresh(this.payload)
+    
+    // when the wheel stops spinning for 500 ms refresh the image using the img processor (time expensive operation)
+    this.mouseEvents.wheelStopListener(window, ()=> {
+      this.processor.resize(this.zoom_ratio,this.payload);
+      this.refresh(this.payload);
+    },300);
   }
-
   refresh(payload){
     let data = {
       width:  payload.get_width(),
@@ -71,11 +99,11 @@ class Displayer{
       this.textureData.texture,
       this.textureData.width,
       this.textureData.height,
-      this.dx,this.dy);
-  
+      this.dx,this.dy,this.zoom_ratio);
+      console.log(`there ${payload.get_width()} , ${payload.get_height()}`);
   }
   scale_img(event){
-    this.processor.resize(this.zoom_ratio,this.payload);
+    //this.processor.resize(this.zoom_ratio,this.payload);
     this.refresh(this.payload);
 
   }
@@ -92,7 +120,7 @@ class Displayer{
       this.textureData.texture,
       this.textureData.width,
       this.textureData.height,
-      this.dx,this.dy);
+      this.dx,this.dy,this.zoom_ratio);
   }
   getPtr(program,gl){
     return {
@@ -165,7 +193,7 @@ class Displayer{
       texture: tex,
     };
   }
-  drawImage(program,gl,tex, texWidth, texHeight, dstX, dstY) {
+  drawImage(program,gl,tex, texWidth, texHeight, dstX, dstY,scale_ratio=1.0) {
 
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
     // Tell WebGL how to convert from clip space to pixels
@@ -195,7 +223,7 @@ class Displayer{
 
     // this matrix will scale our 1 unit quad
     // from 1 unit to texWidth, texHeight units
-    matrix = m4.scale(matrix, texWidth, texHeight, 1);
+    matrix = m4.scale(matrix, texWidth * scale_ratio, texHeight * scale_ratio, 1);
 
     // Set the matrix.
     gl.uniformMatrix4fv(this.ptr.matrix, false, matrix);
@@ -210,14 +238,61 @@ class Displayer{
 
 }
 class mouseEvents{
+  _handleDragOver(element, callback) {
+    element.addEventListener('dragover',function(event){
+      event.stopPropagation();
+      event.preventDefault();
+      callback(event);//
+     
+    });
+
+  }
+  _handleDrop(element, callback) {
+    element.addEventListener('drop', function(event){
+      event.stopPropagation();
+      event.preventDefault();
+      
+      callback(event);
+    });
+
+    //if (files && files.length === 1 && files[0].type.match('image/jpeg')) {
+    //  const fileReader = new FileReader();
+    //  fileReader.onload = (event) => {
+    //    if (this._loadImage(new Uint8Array(event.target.result))) {
+    //      this._invalidate();
+    //    }
+    //  };
+    //  fileReader.onerror = () => {
+    //    console.error('Unable to read file ' + file.name + '.');
+    //  };
+    //  fileReader.readAsArrayBuffer(files[0]);
+    //} else {
+    //  console.error('Unsupported files or content dropped.');
+    //  alert('This demo only supports displaying JPEG files.');
+    //}
+  }
   handleMouseWheel(event){
-    event.stopPropagation();
+    //event.stopPropagation();
     event.preventDefault();
     const delta = Math.max(-1, Math.min(1, -event.deltaY));
     this.zoom_ratio = Math.max(0.1, this.zoom_ratio + delta * 0.05);
-    console.log(this.zoom_ratio)
+
     this.scale_listener();
   }
+  wheelStopListener(element, callback, timeout) {
+      let handle = null;
+      let onScroll = function() {
+          if (handle) {
+              clearTimeout(handle);
+          }
+          handle = setTimeout(callback, timeout || 400); // default 400 ms
+      };
+      element.addEventListener('wheel', onScroll);
+      return function() {
+          element.removeEventListener('wheel', onScroll);
+      };
+  }
+
 
   mouse_clicked(event){
     event.stopPropagation();

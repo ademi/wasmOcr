@@ -13,8 +13,9 @@
       }
 
       body {
-        background-color: #aaa;
+        /*background-color: #aaa;*/
         font-family: Sans-Serif;
+        text-align: center;
       }
 
       canvas {
@@ -36,9 +37,13 @@
       #canvas{
         display: none;
       }
+      p{
+        margin:30px;
+      }
     </style>
   </head>
   <body>
+    <p>Drag and drop a JPEG image onto the canvas</p>
     <canvas id="glcanvas"  width="640" height="480" ></canvas>
     <!--<img id="sample_img" />-->
     <canvas id="canvas"></canvas>

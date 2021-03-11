@@ -44,6 +44,7 @@ impl Context {
         let buffer = reader.decode().unwrap();
         let w =buffer.as_rgba8().unwrap().width();
         let h =buffer.as_rgba8().unwrap().height();
+        //log!("here {} , {}",w,h);
         Context{
             original_img: buffer,
             width:        w,
@@ -70,10 +71,10 @@ impl Context {
         }
     }
     pub fn resize(&mut self, ratio:f32 ,payload:&mut JsPayLoad){
-        let resized = self.original_img.resize(
+        let resized = self.original_img.resize_exact(
             (self.displayed_width as f32 *ratio ) as u32,
             (self.displayed_height as f32 *ratio) as u32,
-            FilterType::Gaussian
+            FilterType::Nearest
         ).to_rgba8();
         payload.width   =  resized.width();
         payload.height  =  resized.height();
